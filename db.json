@@ -13,6 +13,20 @@
       "genre": "Fantasy",
       "year": "2014",
       "id": "SRUi5AmYD-M"
+    },
+    {
+      "title": "11 rules of life",
+      "author": "anamika",
+      "genre": "self help",
+      "year": "2017",
+      "id": "7hujpcfllmw"
+    },
+    {
+      "title": "11 rules of life",
+      "author": "anamika",
+      "genre": "self help",
+      "year": "2017",
+      "id": "eU9meP_50RI"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

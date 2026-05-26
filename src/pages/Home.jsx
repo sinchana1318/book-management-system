@@ -3,22 +3,28 @@ import API from "../services/api";
 
 function Home() {
 
-  
+  // STATES
   const [books, setBooks] = useState([]);
+
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [genre, setGenre] = useState("");
   const [year, setYear] = useState("");
-  const [search, setSearch] = useState("");
+
+  const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
   const [filterGenre, setFilterGenre] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // FETCH DATA
   useEffect(() => {
     fetchBooks();
   }, []);
 
-  
+  // FETCH BOOKS
   const fetchBooks = async () => {
 
     try {
@@ -29,6 +35,8 @@ function Home() {
 
       setBooks(res.data);
 
+      setSearchResults(res.data);
+
       setLoading(false);
 
     } catch (err) {
@@ -36,10 +44,38 @@ function Home() {
       setError("Something went wrong");
 
       setLoading(false);
+
+      alert("Failed to fetch books ❌");
     }
   };
 
+  // ADD BOOK
   const addBook = async () => {
+
+    if (!title) {
+      alert("Please enter book title");
+      return;
+    }
+
+    if (!author) {
+      alert("Please enter author name");
+      return;
+    }
+
+    if (!genre) {
+      alert("Please select genre");
+      return;
+    }
+
+    if (!year) {
+      alert("Please enter publication year");
+      return;
+    }
+
+    if (year < 1000 || year > 2026) {
+      alert("Please enter valid year");
+      return;
+    }
 
     const newBook = {
       title,
@@ -48,24 +84,101 @@ function Home() {
       year,
     };
 
-    await API.post("/books", newBook);
+    try {
 
-    fetchBooks();
+      await API.post("/books", newBook);
 
-    setTitle("");
-    setAuthor("");
-    setGenre("");
-    setYear("");
+      fetchBooks();
+
+      alert("Book Added Successfully ✅");
+
+      setTitle("");
+      setAuthor("");
+      setGenre("");
+      setYear("");
+
+    } catch (err) {
+
+      alert("Failed to add book ❌");
+    }
   };
 
   // DELETE BOOK
   const deleteBook = async (id) => {
 
-    await API.delete(`/books/${id}`);
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this book?"
+    );
 
-    fetchBooks();
+    if (!confirmDelete) {
+
+      alert("Delete Cancelled");
+
+      return;
+    }
+
+    try {
+
+      await API.delete(`/books/${id}`);
+
+      fetchBooks();
+
+      alert("Book Deleted Successfully ❌");
+
+    } catch (err) {
+
+      alert("Failed to delete book ❌");
+    }
   };
 
+  // SEARCH
+  const handleSearch = () => {
+
+    if (!searchInput.trim()) {
+
+      alert("Please enter title or author to search");
+
+      return;
+    }
+
+    const filteredBooks = books
+      .filter(
+        (book) =>
+          ((book.title || "")
+            .toLowerCase()
+            .includes(searchInput.toLowerCase())) ||
+
+          ((book.author || "")
+            .toLowerCase()
+            .includes(searchInput.toLowerCase()))
+      )
+      .filter(
+        (book) =>
+          filterGenre === "" || book.genre === filterGenre
+      );
+
+    setSearchResults(filteredBooks);
+
+    if (filteredBooks.length === 0) {
+
+      alert("No Data Found ❌");
+
+    } else {
+
+      alert(
+        filteredBooks.length +
+        " result(s) found. Scroll down to view results ✅"
+      );
+
+      // AUTO SCROLL TO RESULTS
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // LOADING
   if (loading) return <h1>Loading...</h1>;
 
   return (
@@ -97,7 +210,7 @@ function Home() {
 
       </div>
 
-      
+      {/* MAIN CONTENT */}
       <div
         style={{
           flex: 1,
@@ -109,54 +222,83 @@ function Home() {
           Book Management System
         </h1>
 
-      
+        {/* ERROR */}
         {error && (
           <p style={{ color: "red" }}>
             {error}
           </p>
         )}
 
-      
+        {/* SEARCH SECTION */}
         <div
           style={{
-            display: "flex",
-            gap: "15px",
             marginBottom: "20px",
           }}
         >
 
-          <input
-            type="text"
-            placeholder="Search by title or author"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+          {/* SEARCH + FILTER */}
+          <div
             style={{
-              padding: "10px",
-              width: "300px",
-              borderRadius: "8px",
-              border: "1px solid gray",
-            }}
-          />
-
-          <select
-            value={filterGenre}
-            onChange={(e) => setFilterGenre(e.target.value)}
-            style={{
-              padding: "10px",
-              borderRadius: "8px",
+              display: "flex",
+              gap: "15px",
+              marginBottom: "10px",
+              alignItems: "center",
             }}
           >
 
-            <option value="">All Genres</option>
-            <option value="Fantasy">Fantasy</option>
-            <option value="Self Help">Self Help</option>
-            <option value="Science">Science</option>
+            {/* SEARCH INPUT */}
+            <input
+              type="text"
+              placeholder="Search by title or author"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              style={{
+                padding: "10px",
+                width: "300px",
+                borderRadius: "8px",
+                border: "1px solid gray",
+              }}
+            />
 
-          </select>
+            {/* FILTER */}
+            <select
+              value={filterGenre}
+              onChange={(e) => setFilterGenre(e.target.value)}
+              style={{
+                padding: "10px",
+                borderRadius: "8px",
+              }}
+            >
+
+              <option value="">All Genres</option>
+              <option value="Fantasy">Fantasy</option>
+              <option value="Self Help">Self Help</option>
+              <option value="Science">Science</option>
+
+            </select>
+
+          </div>
+
+          {/* SEARCH BUTTON */}
+          <button
+            onClick={handleSearch}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#2563eb",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+          >
+
+            Search
+
+          </button>
 
         </div>
 
-        
+        {/* ADD BOOK FORM */}
         <div
           style={{
             backgroundColor: "white",
@@ -178,6 +320,7 @@ function Home() {
             }}
           >
 
+            {/* TITLE */}
             <input
               type="text"
               placeholder="Enter title"
@@ -189,6 +332,7 @@ function Home() {
               }}
             />
 
+            {/* AUTHOR */}
             <input
               type="text"
               placeholder="Enter author"
@@ -200,17 +344,24 @@ function Home() {
               }}
             />
 
-            <input
-              type="text"
-              placeholder="Enter genre"
+            {/* GENRE */}
+            <select
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
               style={{
                 padding: "10px",
                 borderRadius: "8px",
               }}
-            />
+            >
 
+              <option value="">Select Genre</option>
+              <option value="Fantasy">Fantasy</option>
+              <option value="Self Help">Self Help</option>
+              <option value="Science">Science</option>
+
+            </select>
+
+            {/* YEAR */}
             <input
               type="number"
               placeholder="Enter year"
@@ -224,6 +375,7 @@ function Home() {
 
           </div>
 
+          {/* ADD BUTTON */}
           <button
             onClick={addBook}
             style={{
@@ -243,71 +395,96 @@ function Home() {
 
         </div>
 
-        {}
+        {/* SEARCH RESULTS */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "20px",
+            marginTop: "40px",
           }}
         >
 
-          {books
-            .filter(
-              (book) =>
-                book.title.toLowerCase().includes(search.toLowerCase()) ||
-                book.author.toLowerCase().includes(search.toLowerCase())
-            )
-            .filter(
-              (book) =>
-                filterGenre === "" || book.genre === filterGenre
-            )
-            .map((book) => (
+          <h2 style={{ marginBottom: "20px" }}>
+            Search Results
+          </h2>
 
-              <div
-                key={book.id}
-                style={{
-                  backgroundColor: "white",
-                  padding: "20px",
-                  borderRadius: "10px",
-                  boxShadow: "0px 2px 8px rgba(0,0,0,0.1)",
-                }}
-              >
+          {/* NO DATA */}
+          {searchResults.length === 0 ? (
 
-                <h2>{book.title}</h2>
+            <div
+              style={{
+                backgroundColor: "white",
+                padding: "30px",
+                borderRadius: "10px",
+                textAlign: "center",
+                color: "red",
+                fontWeight: "bold",
+              }}
+            >
 
-                <p>
-                  <b>Author:</b> {book.author}
-                </p>
+              No Data Found ❌
 
-                <p>
-                  <b>Genre:</b> {book.genre}
-                </p>
+            </div>
 
-                <p>
-                  <b>Year:</b> {book.year}
-                </p>
+          ) : (
 
-                <button
-                  onClick={() => deleteBook(book.id)}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gap: "20px",
+              }}
+            >
+
+              {searchResults.map((book) => (
+
+                <div
+                  key={book.id}
                   style={{
-                    marginTop: "10px",
-                    padding: "10px 15px",
-                    backgroundColor: "red",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
+                    backgroundColor: "white",
+                    padding: "20px",
+                    borderRadius: "10px",
+                    boxShadow: "0px 2px 8px rgba(0,0,0,0.1)",
                   }}
                 >
 
-                  Delete
+                  <h2>{book.title}</h2>
 
-                </button>
+                  <p>
+                    <b>Author:</b> {book.author}
+                  </p>
 
-              </div>
+                  <p>
+                    <b>Genre:</b> {book.genre}
+                  </p>
 
-            ))}
+                  <p>
+                    <b>Year:</b> {book.year}
+                  </p>
+
+                  {/* DELETE BUTTON */}
+                  <button
+                    onClick={() => deleteBook(book.id)}
+                    style={{
+                      marginTop: "10px",
+                      padding: "10px 15px",
+                      backgroundColor: "red",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
+
+                    Delete
+
+                  </button>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
 
         </div>
 
