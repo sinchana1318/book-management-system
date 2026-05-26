@@ -1,0 +1,19 @@
+{
+  "books": [
+    {
+      "id": "2",
+      "title": "Atomic Habits",
+      "author": "James Clear",
+      "genre": "Self Help",
+      "year": 2018
+    },
+    {
+      "title": "sin",
+      "author": "sinc",
+      "genre": "Fantasy",
+      "year": "2014",
+      "id": "SRUi5AmYD-M"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
